@@ -1,0 +1,39 @@
+from typing import List
+
+from pydantic import BaseModel
+
+class DetectionBox(BaseModel):
+    x1: float
+    y1: float
+    x2: float
+    y2: float
+    confidence: float
+    cls: int
+    cls_txt: str
+
+class DetectionWH(BaseModel):
+    x_center: float
+    y_center: float
+    width: float
+    height: float
+    confidence: float
+    cls: int
+    cls_txt: str
+
+class DetectionWHNorm(BaseModel):
+    x_center_norm: float
+    y_center_norm: float
+    width_norm: float
+    height_norm: float
+    confidence: float
+    cls: int
+    cls_txt: str
+
+class DetectionXYXYNorm(BaseModel):
+    x1_norm: float
+    y1_norm: float
+    x2_norm: float
+    y2_norm: float
+    confidence: float
+    cls: int
+    cls_txt: str

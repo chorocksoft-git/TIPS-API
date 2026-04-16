@@ -1,0 +1,86 @@
+INFO:     Will watch for changes in these directories: ['/home/ubuntu/workspace/TIPS_API/app']
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [10166] using StatReload
+INFO:     Started server process [10185]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     14.52.118.231:6571 - "GET /docs HTTP/1.1" 200 OK
+INFO:     14.52.118.231:6571 - "GET /openapi.json HTTP/1.1" 200 OK
+INFO:     14.52.118.231:6571 - "GET /docs HTTP/1.1" 200 OK
+INFO:     14.52.118.231:6571 - "GET /openapi.json HTTP/1.1" 200 OK
+INFO:     14.52.118.231:6570 - "GET /docs HTTP/1.1" 200 OK
+INFO:     14.52.118.231:6570 - "GET /openapi.json HTTP/1.1" 200 OK
+INFO:     14.52.118.231:6570 - "GET /docs HTTP/1.1" 200 OK
+INFO:     14.52.118.231:6570 - "GET /openapi.json HTTP/1.1" 200 OK
+INFO:     14.52.118.231:6578 - "GET / HTTP/1.1" 404 Not Found
+[DEBUG|run.py:38] 2025-10-29 08:28:41,539 > 
+[DEBUG|run.py:44] 2025-10-29 08:28:41,539 > {"detail":"Not Found"}
+INFO:     14.52.118.231:6784 - "GET /docs HTTP/1.1" 200 OK
+INFO:     14.52.118.231:6784 - "GET /openapi.json HTTP/1.1" 200 OK
+INFO:     14.52.118.231:6789 - "GET /openapi.json HTTP/1.1" 200 OK
+INFO:     87.26.32.161:55173 - "GET / HTTP/1.0" 404 Not Found
+[DEBUG|run.py:38] 2025-10-29 09:22:30,083 > 
+[DEBUG|run.py:44] 2025-10-29 09:22:30,083 > {"detail":"Not Found"}
+WARNING:  Invalid HTTP request received.
+INFO:     195.184.76.3:35951 - "GET / HTTP/1.1" 404 Not Found
+[DEBUG|run.py:38] 2025-10-29 11:44:50,917 > 
+[DEBUG|run.py:44] 2025-10-29 11:44:50,917 > {"detail":"Not Found"}
+WARNING:  Invalid HTTP request received.
+INFO:     3.134.148.59:46380 - "GET / HTTP/1.1" 404 Not Found
+[DEBUG|run.py:38] 2025-10-29 14:54:41,522 > 
+[DEBUG|run.py:44] 2025-10-29 14:54:41,522 > {"detail":"Not Found"}
+INFO:     3.134.148.59:46820 - "GET / HTTP/1.1" 404 Not Found
+[DEBUG|run.py:38] 2025-10-29 14:55:58,510 > 
+[DEBUG|run.py:44] 2025-10-29 14:55:58,510 > {"detail":"Not Found"}
+WARNING:  Invalid HTTP request received.
+WARNING:  Invalid HTTP request received.
+WARNING:  Invalid HTTP request received.
+INFO:     198.235.24.117:61620 - "GET / HTTP/1.1" 404 Not Found
+[DEBUG|run.py:38] 2025-10-29 21:13:54,269 > 
+[DEBUG|run.py:44] 2025-10-29 21:13:54,269 > {"detail":"Not Found"}
+INFO:     14.52.118.231:7338 - "GET /docs HTTP/1.1" 200 OK
+INFO:     14.52.118.231:7338 - "GET /openapi.json HTTP/1.1" 200 OK
+INFO:     14.52.118.231:7337 - "GET /docs HTTP/1.1" 200 OK
+INFO:     14.52.118.231:7337 - "GET /openapi.json HTTP/1.1" 200 OK
+INFO:     14.52.118.231:8611 - "GET /docs HTTP/1.1" 200 OK
+INFO:     14.52.118.231:8611 - "GET /openapi.json HTTP/1.1" 200 OK
+
+0: 448x640 4 Allied Firearmss, 4 Multicams, 228.2ms
+Speed: 12.6ms preprocess, 228.2ms inference, 3.1ms postprocess per image at shape (1, 3, 448, 640)
+INFO:     14.52.118.231:8610 - "POST /ai/latest/detect/xyxy HTTP/1.1" 200 OK
+[DEBUG|run.py:41] 2025-10-30 00:47:21,042 > [binary req_body] size=9385957 bytes
+[DEBUG|run.py:44] 2025-10-30 00:47:21,043 > [{"x1":402.8701171875,"y1":1846.435302734375,"x2":1045.4962158203125,"y2":3177.087646484375,"confidence":0.8197819590568542,"cls":3,"cls_txt":"Multicam"},{"x1":1141.3106689453125,"y1":1832.847900390625,"x2":1764.98681640625,"y2":3130.33056640625,"confidence":0.7703565359115601,"cls":3,"cls_txt":"Multicam"},{"x1":4345.29833984375,"y1":1754.876953125,"x2":5334.28173828125,"y2":3395.34326171875,"confidence":0.7237564921379089,"cls":3,"cls_txt":"Multicam"},{"x1":4550.86279296875,"y1":1676.373779296875,"x2":5803.5966796875,"y2":2101.216064453125,"confidence":0.7222645878791809,"cls":0,"cls_txt":"Allied Firearms"},{"x1":1448.871337890625,"y1":1972.42626953125,"x2":1993.681640625,"y2":2245.924560546875,"confidence":0.608112096786499,"cls":0,"cls_txt":"Allied Firearms"},{"x1":3216.0205078125,"y1":1794.5277099609375,"x2":3890.361083984375,"y2":3215.6669921875,"confidence":0.5957953929901123,"cls":3,"cls_txt":"Multicam"},{"x1":453.49432373046875,"y1":1889.5615234375,"x2":806.6870727539062,"y2":2178.223388671875,"confidence":0.378025084733963,"cls":0,"cls_txt":"Allied Firearms"},{"x1":3215.930419921875,"y1":1878.717041015625,"x2":3583.184814453125,"y2":2239.53466796875,"confidence":0.33632445335388184,"cls":0,"cls_txt":"Allied Firearms"}]
+INFO:     14.52.118.231:8641 - "GET /docs HTTP/1.1" 200 OK
+INFO:     14.52.118.231:8641 - "GET /openapi.json HTTP/1.1" 200 OK
+INFO:     14.52.118.231:8642 - "GET /docs HTTP/1.1" 200 OK
+INFO:     14.52.118.231:8642 - "GET /openapi.json HTTP/1.1" 200 OK
+INFO:     14.52.118.231:8642 - "GET /docs HTTP/1.1" 200 OK
+INFO:     14.52.118.231:8642 - "GET /openapi.json HTTP/1.1" 200 OK
+INFO:     14.52.118.231:8643 - "GET /docs HTTP/1.1" 200 OK
+INFO:     14.52.118.231:8643 - "GET /openapi.json HTTP/1.1" 200 OK
+INFO:     14.52.118.231:8643 - "GET /docs HTTP/1.1" 200 OK
+INFO:     14.52.118.231:8643 - "GET /openapi.json HTTP/1.1" 200 OK
+INFO:     14.52.118.231:8643 - "GET /docs HTTP/1.1" 200 OK
+INFO:     14.52.118.231:8643 - "GET /openapi.json HTTP/1.1" 200 OK
+INFO:     14.52.118.231:8643 - "GET /docs HTTP/1.1" 200 OK
+INFO:     14.52.118.231:8643 - "GET /openapi.json HTTP/1.1" 200 OK
+INFO:     14.52.118.231:8643 - "GET /docs HTTP/1.1" 200 OK
+INFO:     14.52.118.231:8643 - "GET /openapi.json HTTP/1.1" 200 OK
+INFO:     14.52.118.231:8643 - "GET /docs HTTP/1.1" 200 OK
+INFO:     14.52.118.231:8643 - "GET /openapi.json HTTP/1.1" 200 OK
+INFO:     Will watch for changes in these directories: ['/home/ubuntu/workspace/TIPS_API/app']
+ERROR:    [Errno 98] Address already in use
+INFO:     14.52.118.231:8660 - "GET /docs HTTP/1.1" 200 OK
+INFO:     14.52.118.231:8660 - "GET /openapi.json HTTP/1.1" 200 OK
+INFO:     14.52.118.231:8660 - "GET /docs HTTP/1.1" 200 OK
+INFO:     14.52.118.231:8660 - "GET /openapi.json HTTP/1.1" 200 OK
+INFO:     14.52.118.231:8660 - "GET /docs HTTP/1.1" 200 OK
+INFO:     14.52.118.231:8660 - "GET /openapi.json HTTP/1.1" 200 OK
+INFO:     14.52.118.231:8662 - "GET /docs HTTP/1.1" 200 OK
+INFO:     14.52.118.231:8662 - "GET /openapi.json HTTP/1.1" 200 OK
+
+0: 448x640 4 Allied Firearmss, 4 Multicams, 98.6ms
+Speed: 4.0ms preprocess, 98.6ms inference, 2.0ms postprocess per image at shape (1, 3, 448, 640)
+INFO:     14.52.118.231:8664 - "POST /ai/latest/detect/xyxy HTTP/1.1" 200 OK
+[DEBUG|run.py:41] 2025-10-30 00:53:16,378 > [binary req_body] size=9385957 bytes
+[DEBUG|run.py:44] 2025-10-30 00:53:16,380 > [{"x1":402.8701171875,"y1":1846.435302734375,"x2":1045.4962158203125,"y2":3177.087646484375,"confidence":0.8197819590568542,"cls":3,"cls_txt":"Multicam"},{"x1":1141.3106689453125,"y1":1832.847900390625,"x2":1764.98681640625,"y2":3130.33056640625,"confidence":0.7703565359115601,"cls":3,"cls_txt":"Multicam"},{"x1":4345.29833984375,"y1":1754.876953125,"x2":5334.28173828125,"y2":3395.34326171875,"confidence":0.7237564921379089,"cls":3,"cls_txt":"Multicam"},{"x1":4550.86279296875,"y1":1676.373779296875,"x2":5803.5966796875,"y2":2101.216064453125,"confidence":0.7222645878791809,"cls":0,"cls_txt":"Allied Firearms"},{"x1":1448.871337890625,"y1":1972.42626953125,"x2":1993.681640625,"y2":2245.924560546875,"confidence":0.608112096786499,"cls":0,"cls_txt":"Allied Firearms"},{"x1":3216.0205078125,"y1":1794.5277099609375,"x2":3890.361083984375,"y2":3215.6669921875,"confidence":0.5957953929901123,"cls":3,"cls_txt":"Multicam"},{"x1":453.49432373046875,"y1":1889.5615234375,"x2":806.6870727539062,"y2":2178.223388671875,"confidence":0.378025084733963,"cls":0,"cls_txt":"Allied Firearms"},{"x1":3215.930419921875,"y1":1878.717041015625,"x2":3583.184814453125,"y2":2239.53466796875,"confidence":0.33632445335388184,"cls":0,"cls_txt":"Allied Firearms"}]

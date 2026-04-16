@@ -1,0 +1,18 @@
+from ultralytics import YOLO
+
+model = YOLO("model/best.pt")
+
+label = { 0: 'Allied Firearms',
+          1: 'Allied Uniforms',
+          2: 'Allied Equipment',
+          3: 'Multicam',
+          4: 'Enemy Firearms',
+          5: 'Enemy Uniforms',
+          6: 'Enemy Equipment',
+          7: 'Animals',
+          8: 'Civilians',}
+
+def run_yolo(image):
+    results = model(image)
+    boxes = results[0].boxes
+    return boxes
