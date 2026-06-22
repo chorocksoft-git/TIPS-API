@@ -5,10 +5,10 @@
 ## 1. 프로젝트 개요
 * **목적**: 전술 상황(총기, 군복, 장비 등)에서의 실시간 객체 탐지 및 위협 수준 분석.
 * **핵심 모델**: YOLO v11m 추가 학습 모델.
-* **주요 성능**: mAP50 기준 **91.97%** 달성.
+* **주요 성능**: mAP50 기준 **91.6%** 달성.
 
 ## 2. 핵심 기능
-* **객체 탐지 (Object Detection)**: 9종의 전술 객체(아군/적군 장비, 민간인 등) 실시간 탐지.
+* **객체 탐지 (Object Detection)**: 10종의 전술 객체(아군/적군 장비, 민간인, 드론 등) 실시간 탐지.
 * **상황 판단 (Situational Awareness)**: 탐지된 객체 종류와 수에 따라 상황을 3단계(`SAFE`, `CAUTION`, `WARNING`)로 분석.
 * **거리 추정 (Distance Estimation)**: 바운딩 박스의 높이를 기반으로 객체와의 대략적인 거리(m) 계산.
 * **다양한 출력 포맷**: XYXY, XYWHN(정규화), XYXYN(정규화) 등 다양한 좌표 형식 지원.
@@ -25,6 +25,7 @@
 | 6 | Enemy Equipment | E-E |
 | 7 | Animals | ANI |
 | 8 | Civilians | CIV |
+| 9 | Drones | DRN |
 
 ## 4. 주요 소스코드 구성
 * `run.py`: FastAPI 서버 실행 엔트리 포인트 (Logging, CORS 설정 포함).

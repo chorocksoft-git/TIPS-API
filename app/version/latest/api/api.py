@@ -1,16 +1,16 @@
 import io
 import os
 from datetime import datetime
-import random
 
 from PIL import Image
 from fastapi import APIRouter, File, UploadFile
 from module.yolo11 import run_yolo, label, label_initials
-# 수정된 schema import
+
+# schema import
 from schema.schema import (
     DetectionBoxExtended, DetectionResponse, AnalysisSummary,
-    DetectionWHNormExtended, DetectionResponseWHNorm,  # 추가됨
-    DetectionXYXYNormExtended, DetectionResponseXYXYNorm  # 추가됨
+    DetectionWHNormExtended, DetectionResponseWHNorm,
+    DetectionXYXYNormExtended, DetectionResponseXYXYNorm
 )
 
 ai_router = APIRouter(
@@ -23,66 +23,79 @@ ai_router = APIRouter(
 # [설정] 이미지 저장 경로 설정
 # ---------------------------------------------------------
 UPLOAD_DIR = "./uploaded_images"
-# 폴더가 없으면 생성
+RESULT_DIR = "./saved_results"
+
 if not os.path.exists(UPLOAD_DIR):
     os.makedirs(UPLOAD_DIR)
+if not os.path.exists(RESULT_DIR):
+    os.makedirs(RESULT_DIR)
 
 # ---------------------------------------------------------
-# [Constants] 거리 계산 상수
+# [Constants] 거리 계산용 클래스별 평균 실제 크기(m) 정의
 # ---------------------------------------------------------
-# 공식: Distance = (실제키 * 초점거리계수) / 이미지상_박스높이
-ESTIMATED_REAL_HEIGHT = 1.7  # 사람 평균 키 (m)
-FOCAL_LENGTH_FACTOR = 1000  # 임의의 초점 거리 상수 (Pixel 단위, 현장 튜닝 필요)
+FOCAL_LENGTH_FACTOR = 1000   # 임의의 초점 거리 상수 (Pixel 단위, 현장 튜닝 필요)
 
+# 각 인식 물체의 대략적인 평균 높이(m) 정의
+CLASS_HEIGHTS = {
+    0: 0.8,  # Allied Firearms (총기류 대략적 길이)
+    1: 1.7,  # Allied Uniforms (사람 평균 키)
+    2: 1.0,  # Allied Equipment (군장, 헬멧 등)
+    3: 1.7,  # Multicam (사람 평균 키)
+    4: 0.8,  # Enemy Firearms (총기류)
+    5: 1.7,  # Enemy Uniforms (사람 평균 키)
+    6: 1.0,  # Enemy Equipment (군장, 헬멧 등)
+    7: 0.6,  # Animals (군견 등 동물 평균 높이)
+    8: 1.7,  # Civilians (사람 평균 키)
+    9: 0.5,  # Drones (드론 평균 두께/높이)
+}
 
 # ---------------------------------------------------------
 # [Helper Functions] 비즈니스 로직
 # ---------------------------------------------------------
 
-def save_image_file(image_bytes: bytes) -> str:
-    """
-    이미지 바이트 데이터를 받아서 타임스탬프 이름으로 저장하고 경로를 반환합니다.
-    """
-    # 현재 시간으로 유니크한 파일명 생성 (예: 20260123_123059_123456.jpg)
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-    filename = f"{timestamp}.jpg"
+def save_image_file(image_bytes: bytes, filename: str) -> str:
     filepath = os.path.join(UPLOAD_DIR, filename)
-
     try:
         with open(filepath, "wb") as f:
             f.write(image_bytes)
-        print(f"[INFO] Image saved: {filepath}")  # 서버 로그 확인용
+        print(f"[INFO] Uploaded image saved: {filepath}")
         return filepath
     except Exception as e:
-        print(f"[ERROR] Failed to save image: {e}")
+        print(f"[ERROR] Failed to save uploaded image: {e}")
+        return None
+
+def save_result_image(results, filename: str) -> str:
+    filepath = os.path.join(RESULT_DIR, f"result_{filename}")
+    try:
+        im_array = results[0].plot()
+        im = Image.fromarray(im_array[..., ::-1])  # RGB 변환
+        im.save(filepath)
+        print(f"[INFO] Result image saved: {filepath}")
+        return filepath
+    except Exception as e:
+        print(f"[ERROR] Failed to save result image: {e}")
         return None
 
 
-def calculate_distance(box_height_px: float) -> float:
+def calculate_distance(box_height_px: float, cls_id: int) -> float:
     """
-    이미지 내 객체의 픽셀 높이를 이용하여 대략적인 거리(m)를 계산
+    클래스별 평균 크기(CLASS_HEIGHTS)와 픽셀 높이를 이용하여 거리를 계산합니다.
     """
     if box_height_px <= 0:
         return 0
 
-    # 단순 핀홀 카메라 모델 비례식 적용
-    distance = (ESTIMATED_REAL_HEIGHT * FOCAL_LENGTH_FACTOR) / box_height_px
-
-    # 소수점 4째자리까지 반올림
+    real_height = CLASS_HEIGHTS.get(cls_id, 1.7)
+    distance = (real_height * FOCAL_LENGTH_FACTOR) / box_height_px
     return round(distance, 4)
 
 
 def analyze_overall_situation(analysis_data: list) -> AnalysisSummary:
-    """
-    탐지된 객체들을 종합하여 상황 단계(SAFE, CAUTION, WARNING) 및 최단 거리 판단
-    """
-    # 카운터 초기화
-    cnt_multicam = 0  # 3: Multicam
-    cnt_enemy_firearms = 0  # 4: Enemy Firearms
-    cnt_enemy_uniform = 0  # 5: Enemy Uniforms
-    cnt_enemy_equipment = 0  # 6: Enemy Equipment
+    cnt_multicam = 0
+    cnt_enemy_firearms = 0
+    cnt_enemy_uniform = 0
+    cnt_enemy_equipment = 0
+    cnt_drone = 0
 
-    # 최단 거리 찾기 (초기값: 무한대)
     min_dist = float('inf')
     has_valid_dist = False
 
@@ -90,40 +103,24 @@ def analyze_overall_situation(analysis_data: list) -> AnalysisSummary:
         cid = item['cls']
         dist = item.get('distance')
 
-        # 1. 카운팅
         if cid == 3: cnt_multicam += 1
         if cid == 4: cnt_enemy_firearms += 1
         if cid == 5: cnt_enemy_uniform += 1
         if cid == 6: cnt_enemy_equipment += 1
+        if cid == 9: cnt_drone += 1
 
-        # 2. 최단 거리 갱신 (유효한 거리 값이 있는 경우)
+        # 최단 거리 갱신
         if dist is not None and dist > 0:
             if dist < min_dist:
                 min_dist = dist
                 has_valid_dist = True
 
-    # 최단 거리 값 설정 (없으면 -1.0 반환)
-    # 스키마가 float이므로 "N/A" 문자열 대신 -1.0을 사용
     final_distance = min_dist if has_valid_dist else 0
 
-    # -----------------------------------------------------------
-    # 상황 판단 로직 (우선순위: WARNING -> CAUTION -> SAFE)
-    # -----------------------------------------------------------
-
-    # 기본값
     status = "WARNING"
-
-    # cnt_multicam = 0  # 3: Multicam
-    # cnt_enemy_firearms = 0  # 4: Enemy Firearms
-    # cnt_enemy_uniform = 0  # 5: Enemy Uniforms
-    # cnt_enemy_equipment = 0  # 6: Enemy Equipment
-
-    # [1] SAFE (저위험)
-    if (cnt_multicam + cnt_enemy_uniform) <= 1 and cnt_enemy_firearms == 0 and cnt_enemy_equipment == 0:
+    if (cnt_multicam + cnt_enemy_uniform) <= 1 and cnt_enemy_firearms == 0 and cnt_enemy_equipment == 0 and cnt_drone == 0:
         status = "SAFE"
-
-    # [2] CAUTION (중위험 - 위 SAFE 조건 불충족 시)
-    elif (cnt_multicam + cnt_enemy_uniform) <= 2 and cnt_enemy_firearms <= 1 and cnt_enemy_equipment == 0:
+    elif (cnt_multicam + cnt_enemy_uniform) <= 2 and cnt_enemy_firearms <= 1 and cnt_enemy_equipment == 0 and cnt_drone <= 2:
         status = "CAUTION"
 
     return AnalysisSummary(
@@ -141,19 +138,18 @@ def read_root():
     return {"TIPS AI API Server"}
 
 
+# 1️⃣ xyxy 결과
 @ai_router.post("/detect/xyxy", response_model=DetectionResponse)
 async def detect_xyxy(file: UploadFile = File(...)):
-    # 1. 이미지 읽기
     file_bytes = await file.read()
 
-    # [추가] 이미지 서버 디스크에 저장
-    # save_image_file(file_bytes)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+    filename = f"{timestamp}.jpg"
+    save_image_file(file_bytes, filename)
 
-    # 2. PIL 이미지 로드 및 YOLO 추론
     image = Image.open(io.BytesIO(file_bytes))
     boxes = run_yolo(image)
-
-    # 3. 데이터 추출
+    
     xyxy = boxes.xyxy.cpu().numpy()
     conf = boxes.conf.cpu().numpy()
     cls = boxes.cls.cpu().numpy()
@@ -163,29 +159,23 @@ async def detect_xyxy(file: UploadFile = File(...)):
 
     for (x1, y1, x2, y2), c, cl in zip(xyxy, conf, cls):
         cls_id = int(cl)
-        cls_txt = label[cls_id]  # yolo11.py의 label 딕셔너리
+        cls_txt = label[cls_id]
         cls_init = label_initials[cls_id]
         confidence = float(c)
 
-        # 💡 [추가] cls_id에 따른 색상 결정 로직
         if cls_id in [0, 1, 2, 7, 8]:
             cls_color = "green"
             cls_color_code = "#4CAF50"
-        elif cls_id == 3:
+        elif cls_id in [3, 9]:
             cls_color = "yellow"
             cls_color_code = "#FFEB3B"
         else:
             cls_color = "red"
             cls_color_code = "#F44336"
 
-        # (1) 거리 계산 (Summary 분석용, 개별 객체 리턴엔 미포함)
-        # 사람/군인 관련 클래스(0,1,3,4,5,8)인 경우에만 거리 계산
-        distance_val = None
-        if cls_id in [0, 1, 3, 4, 5, 8]:
-            box_height = abs(y2 - y1)
-            distance_val = calculate_distance(box_height)
+        box_height = abs(y2 - y1)
+        distance_val = calculate_distance(box_height, cls_id)
 
-        # (2) 개별 객체 응답 생성 (요청하신 스키마 반영)
         det_obj = DetectionBoxExtended(
             x1=float(x1),
             y1=float(y1),
@@ -199,16 +189,9 @@ async def detect_xyxy(file: UploadFile = File(...)):
             cls_color_code=cls_color_code
         )
         processed_detections.append(det_obj)
+        analysis_data_list.append({'cls': cls_id, 'distance': distance_val})
 
-        # (3) 종합 분석을 위한 데이터 수집
-        analysis_data_list.append({
-            'cls': cls_id,
-            'distance': distance_val
-        })
-
-    # 4. 종합 상황 분석 (status, distance 산출)
     summary_result = analyze_overall_situation(analysis_data_list)
-    summary_result.distance = round(random.uniform(1.1, 2.1), 2)
 
     return DetectionResponse(
         summary=summary_result,
@@ -216,18 +199,18 @@ async def detect_xyxy(file: UploadFile = File(...)):
     )
 
 
-# 3️⃣ xywhn 결과 (정규화된 중심+크기) + 거리/위험도 분석
+# 2️⃣ xywhn 결과
 @ai_router.post("/detect/xywhn", response_model=DetectionResponseWHNorm)
 async def detect_xywhn(file: UploadFile = File(...)):
-    # 1. 이미지 읽기
     file_bytes = await file.read()
 
-    # [추가] 이미지 서버 디스크에 저장
-    save_image_file(file_bytes)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+    filename = f"{timestamp}.jpg"
+    save_image_file(file_bytes, filename)
 
-    # 2. PIL 이미지 로드 및 YOLO 추론
     image = Image.open(io.BytesIO(file_bytes))
     boxes = run_yolo(image)
+    
     img_width, img_height = image.size
 
     xywhn = boxes.xywhn.cpu().numpy()
@@ -243,14 +226,9 @@ async def detect_xywhn(file: UploadFile = File(...)):
         cls_init = label_initials[cls_id]
         confidence = float(c)
 
-        # (1) 거리 계산
-        # 정규화된 높이(h)는 0~1 사이 값이므로, 이미지 높이를 곱해 픽셀 단위로 변환
-        distance_val = None
-        if cls_id in [0, 1, 3, 4, 5, 8]:
-            pixel_height = h * img_height
-            distance_val = calculate_distance(pixel_height)
+        pixel_height = h * img_height
+        distance_val = calculate_distance(pixel_height, cls_id)
 
-        # (2) 응답 객체 생성 (DetectionWHNormExtended)
         det_obj = DetectionWHNormExtended(
             x_center_norm=float(x),
             y_center_norm=float(y),
@@ -262,14 +240,8 @@ async def detect_xywhn(file: UploadFile = File(...)):
             confidence=confidence
         )
         processed_detections.append(det_obj)
+        analysis_data_list.append({'cls': cls_id, 'distance': distance_val})
 
-        # (3) 분석 데이터 수집
-        analysis_data_list.append({
-            'cls': cls_id,
-            'distance': distance_val
-        })
-
-    # 4. 종합 분석
     summary_result = analyze_overall_situation(analysis_data_list)
 
     return DetectionResponseWHNorm(
@@ -278,18 +250,18 @@ async def detect_xywhn(file: UploadFile = File(...)):
     )
 
 
-# 4️⃣ xyxyn 결과 (정규화된 좌상단/우하단 좌표) + 거리/위험도 분석
+# 3️⃣ xyxyn 결과
 @ai_router.post("/detect/xyxyn", response_model=DetectionResponseXYXYNorm)
 async def detect_xyxyn(file: UploadFile = File(...)):
-    # 1. 이미지 읽기
     file_bytes = await file.read()
 
-    # [추가] 이미지 서버 디스크에 저장
-    save_image_file(file_bytes)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+    filename = f"{timestamp}.jpg"
+    save_image_file(file_bytes, filename)
 
-    # 2. PIL 이미지 로드 및 YOLO 추론
     image = Image.open(io.BytesIO(file_bytes))
     boxes = run_yolo(image)
+    
     img_width, img_height = image.size
 
     xyxyn = boxes.xyxyn.cpu().numpy()
@@ -305,14 +277,9 @@ async def detect_xyxyn(file: UploadFile = File(...)):
         cls_init = label_initials[cls_id]
         confidence = float(c)
 
-        # (1) 거리 계산
-        # 정규화된 좌표이므로 (y2 - y1)은 0~1 사이의 높이 비율
-        distance_val = None
-        if cls_id in [0, 1, 3, 4, 5, 8]:
-            pixel_height = abs(y2 - y1) * img_height
-            distance_val = calculate_distance(pixel_height)
+        pixel_height = abs(y2 - y1) * img_height
+        distance_val = calculate_distance(pixel_height, cls_id)
 
-        # (2) 응답 객체 생성 (DetectionXYXYNormExtended)
         det_obj = DetectionXYXYNormExtended(
             x1_norm=float(x1),
             y1_norm=float(y1),
@@ -324,14 +291,8 @@ async def detect_xyxyn(file: UploadFile = File(...)):
             confidence=confidence
         )
         processed_detections.append(det_obj)
+        analysis_data_list.append({'cls': cls_id, 'distance': distance_val})
 
-        # (3) 분석 데이터 수집
-        analysis_data_list.append({
-            'cls': cls_id,
-            'distance': distance_val
-        })
-
-    # 4. 종합 분석
     summary_result = analyze_overall_situation(analysis_data_list)
 
     return DetectionResponseXYXYNorm(
@@ -342,6 +303,4 @@ async def detect_xyxyn(file: UploadFile = File(...)):
 
 if __name__ == '__main__':
     import uvicorn
-
     uvicorn.run('run:ai_router', host="0.0.0.0", port=8000, reload=True)
-
